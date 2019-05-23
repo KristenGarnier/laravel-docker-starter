@@ -1,0 +1,83 @@
+version: '3'
+services:
+    apache:
+        build: .docker/apache
+        container_name: laravel_apache
+        ports:
+          - 80:80
+        volumes:
+          - .docker/config/vhosts:/etc/apache2/sites-enabled
+          - ./laravel/public:/home/wwwroot/laravel/public # decomment when laravel is installed
+        depends_on:
+          - php
+
+    mysql:
+        image: mysql
+        command: "--default-authentication-plugin=mysql_native_password"
+        container_name: laravel_mysql
+        volumes:
+            - dbdata:/var/lib/mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: root
+            MYSQL_DATABASE: laravel
+            MYSQL_USER: laravel
+            MYSQL_PASSWORD: laravel
+
+    php:
+        build: .docker/php
+        container_name: laravel_php
+        volumes:
+          - ./laravel_install.sh:/home/wwwroot/laravel/laravel_install.sh
+          - ./laravel:/home/wwwroot/laravel #only for laravel install
+          - composervendor:/home/wwwroot/laravel/vendor
+         # - ./laravel/app:/home/wwwroot/laravel/app # decomment when laravel is installed
+         # - ./laravel/bootstrap:/home/wwwroot/laravel/bootstrap  # decomment when laravel is installed
+         # - ./laravel/config:/home/wwwroot/laravel/config # decomment when laravel is installed
+         # - ./laravel/database:/home/wwwroot/laravel/database # decomment when laravel is installed
+         # - ./laravel/public:/home/wwwroot/laravel/public # decomment when laravel is installed
+         # - ./laravel/resources:/home/wwwroot/laravel/resources # decomment when laravel is installed
+         # - ./laravel/routes:/home/wwwroot/laravel/routes # decomment when laravel is installed
+         # - ./laravel/storage:/home/wwwroot/laravel/storage:cached # decomment when laravel is installed
+         # - ./laravel/tests:/home/wwwroot/laravel/tests # decomment when laravel is installed
+         # - ./laravel/.env:/home/wwwroot/laravel/.env # decomment when laravel is installed
+         # - ./laravel/artisan:/home/wwwroot/laravel/artisan # decomment when laravel is installed
+         # - ./laravel/composer.json:/home/wwwroot/laravel/composer.json # decomment when laravel is installed
+         # - ./laravel/composer.lock:/home/wwwroot/laravel/composer.lock # decomment when laravel is installed
+         # - ./laravel/package.json:/home/wwwroot/laravel/package.json # decomment when laravel is installed
+         # - ./laravel/phpunit.xml:/home/wwwroot/laravel/phpunit.xml # decomment when laravel is installed
+         # - ./laravel/server.php:/home/wwwroot/laravel/server.php # decomment when laravel is installed
+         # - ./laravel/webpack.mix.js:/home/wwwroot/laravel/webpack.mix.js # decomment when laravel is installed
+        environment:
+          - maildev_host=laravel_maildev
+        depends_on:
+          - maildev
+          - mysql
+          - redis
+
+    redis:
+        image: redis:latest
+        container_name: laravel_redis
+        ports:
+          - 6379:6379
+
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        container_name: laravel_phpmyadmin
+        environment:
+          PMA_HOST: mysql
+          PMA_PORT: 3306
+        ports:
+            - 8080:80
+        links:
+            - mysql
+
+    maildev:
+        image: djfarrelly/maildev
+        container_name: laravel_maildev
+        ports:
+          - 8001:80
+volumes:
+    dbdata:
+        driver: local
+    composervendor:
+        driver: local
